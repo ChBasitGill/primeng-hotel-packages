@@ -4,13 +4,10 @@ import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
 import { Dialog } from 'primereact/dialog';
 import { InputText } from 'primereact/inputtext';
-import { Calendar } from 'primereact/calendar';
 import { Dropdown } from 'primereact/dropdown';
-import { Checkbox } from 'primereact/checkbox';
 import { Toast } from 'primereact/toast';
 import { ConfirmDialog } from 'primereact/confirmdialog';
 import { confirmDialog } from 'primereact/confirmdialog';
-import { Chip } from 'primereact/chip';
 import { Badge } from 'primereact/badge';
 import { Package, Hotel, Excursion, TourService } from '../types/Package';
 
@@ -47,7 +44,7 @@ const PackageManager: React.FC = () => {
 
   // Hotel form states
   const [selectedHotel, setSelectedHotel] = useState('');
-  const [selectedRoomType, setSelectedRoomType] = useState('');
+  const [selectedRoomTypes, setSelectedRoomTypes] = useState<string[]>([]);
 
   // Excursion form states
   const [selectedExcursions, setSelectedExcursions] = useState<string[]>([]);
@@ -76,6 +73,33 @@ const PackageManager: React.FC = () => {
     { label: 'Master', value: 'Master' }
   ];
 
+  // Hotel-specific room types mapping
+  const hotelRoomTypes: Record<string, typeof roomTypes> = {
+    'Hotel Luxury': [
+      { label: 'Double', value: 'Double' },
+      { label: 'Master', value: 'Master' }
+    ],
+    'Budget Inn': [
+      { label: 'Single', value: 'Single' },
+      { label: 'Double', value: 'Double' }
+    ],
+    'Grand Palace': [
+      { label: 'Double', value: 'Double' },
+      { label: 'Master', value: 'Master' }
+    ],
+    'City Center Hotel': [
+      { label: 'Single', value: 'Single' },
+      { label: 'Double', value: 'Double' },
+      { label: 'Master', value: 'Master' }
+    ]
+  };
+
+  // Get available room types for selected hotel
+  const getAvailableRoomTypes = () => {
+    if (!selectedHotel) return [];
+    return hotelRoomTypes[selectedHotel] || roomTypes;
+  };
+
   const excursions = [
     { label: 'Eiffel Tower Tour', value: 'Eiffel Tower Tour' },
     { label: 'Louvre Museum', value: 'Louvre Museum' },
@@ -99,7 +123,7 @@ const PackageManager: React.FC = () => {
 
   const resetHotelForm = () => {
     setSelectedHotel('');
-    setSelectedRoomType('');
+    setSelectedRoomTypes([]);
   };
 
   const resetExcursionForm = () => {
@@ -158,17 +182,20 @@ const PackageManager: React.FC = () => {
   };
 
   const handleAddHotel = () => {
-    if (!selectedPackage || !selectedHotel || !selectedRoomType) return;
+    if (!selectedPackage || !selectedHotel || !selectedRoomTypes || selectedRoomTypes.length === 0) return;
 
-    const newHotel: Hotel = {
-      id: Date.now().toString(),
+    // Ensure selectedRoomTypes is an array
+    const roomTypesArray = Array.isArray(selectedRoomTypes) ? selectedRoomTypes : [selectedRoomTypes];
+    
+    const newHotels: Hotel[] = roomTypesArray.map(roomType => ({
+      id: Date.now().toString() + Math.random(),
       hotel: selectedHotel,
-      roomType: selectedRoomType
-    };
+      roomType
+    }));
 
     setPackages(prev => prev.map(pkg => 
       pkg.id === selectedPackage.id 
-        ? { ...pkg, hotels: [...pkg.hotels, newHotel] }
+        ? { ...pkg, hotels: [...pkg.hotels, ...newHotels] }
         : pkg
     ));
 
@@ -212,6 +239,46 @@ const PackageManager: React.FC = () => {
   const openServicesDialog = (pkg: Package) => {
     setSelectedPackage(pkg);
     setShowServicesDialog(true);
+  };
+
+  // Remove handlers for expanded rows
+  const handleRemoveHotel = (packageId: string, hotelId: string) => {
+    setPackages(prev => prev.map(pkg => 
+      pkg.id === packageId 
+        ? { ...pkg, hotels: pkg.hotels.filter(hotel => hotel.id !== hotelId) }
+        : pkg
+    ));
+  };
+
+  const handleRemoveAllHotelsForName = (packageId: string, hotelName: string) => {
+    confirmDialog({
+      message: `Are you sure you want to remove all rooms for ${hotelName}?`,
+      header: 'Confirm Remove All Rooms',
+      icon: 'pi pi-exclamation-triangle',
+      accept: () => {
+        setPackages(prev => prev.map(pkg => 
+          pkg.id === packageId 
+            ? { ...pkg, hotels: pkg.hotels.filter(hotel => hotel.hotel !== hotelName) }
+            : pkg
+        ));
+      }
+    });
+  };
+
+  const handleRemoveExcursion = (packageId: string, excursionId: string) => {
+    setPackages(prev => prev.map(pkg => 
+      pkg.id === packageId 
+        ? { ...pkg, excursions: pkg.excursions.filter(excursion => excursion.id !== excursionId) }
+        : pkg
+    ));
+  };
+
+  const handleRemoveTourService = (packageId: string, serviceId: string) => {
+    setPackages(prev => prev.map(pkg => 
+      pkg.id === packageId 
+        ? { ...pkg, tourServices: pkg.tourServices.filter(service => service.id !== serviceId) }
+        : pkg
+    ));
   };
 
   const summaryBodyTemplate = (rowData: Package) => {
@@ -261,16 +328,48 @@ const PackageManager: React.FC = () => {
   };
 
   const rowExpansionTemplate = (data: Package) => {
+    // Group hotels by hotel name for the remove-all functionality
+    const hotelGroups = data.hotels.reduce((groups, hotel) => {
+      const name = hotel.hotel;
+      if (!groups[name]) {
+        groups[name] = [];
+      }
+      groups[name].push(hotel);
+      return groups;
+    }, {} as Record<string, Hotel[]>);
+
     return (
       <div className="p-4">
         <div className="grid">
           {/* Hotels Section */}
           <div className="col-12 md:col-4">
             <h5>Hotels ({data.hotels.length})</h5>
-            {data.hotels.map((hotel) => (
-              <div key={hotel.id} className="p-3 border-1 border-round mb-2 surface-border">
-                <div className="font-bold">{hotel.hotel}</div>
-                <div className="text-sm text-500">{hotel.roomType} Room</div>
+            {Object.entries(hotelGroups).map(([hotelName, hotels]) => (
+              <div key={hotelName} className="mb-3">
+                <div className="flex justify-content-between align-items-center mb-2">
+                  <h6 className="mb-0 font-bold">{hotelName}</h6>
+                  <Button
+                    icon="pi pi-times-circle"
+                    className="p-button-rounded p-button-text p-button-danger p-button-sm"
+                    tooltip="Remove all rooms for this hotel"
+                    onClick={() => handleRemoveAllHotelsForName(data.id, hotelName)}
+                  />
+                </div>
+                {hotels.map((hotel) => (
+                  <div key={hotel.id} className="p-3 border-1 border-round mb-2 surface-border">
+                    <div className="flex justify-content-between align-items-center">
+                      <div>
+                        <div className="text-sm text-500">{hotel.roomType} Room</div>
+                      </div>
+                      <Button
+                        icon="pi pi-times"
+                        className="p-button-rounded p-button-text p-button-danger p-button-sm"
+                        tooltip="Remove this room"
+                        onClick={() => handleRemoveHotel(data.id, hotel.id)}
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
             ))}
           </div>
@@ -280,7 +379,15 @@ const PackageManager: React.FC = () => {
             <h5>Excursions ({data.excursions.length})</h5>
             {data.excursions.map((excursion) => (
               <div key={excursion.id} className="p-3 border-1 border-round mb-2 surface-border">
-                <div className="font-bold">{excursion.name}</div>
+                <div className="flex justify-content-between align-items-center">
+                  <div className="font-bold">{excursion.name}</div>
+                  <Button
+                    icon="pi pi-trash"
+                    className="p-button-rounded p-button-text p-button-danger p-button-sm"
+                    tooltip="Remove this excursion"
+                    onClick={() => handleRemoveExcursion(data.id, excursion.id)}
+                  />
+                </div>
               </div>
             ))}
           </div>
@@ -290,7 +397,15 @@ const PackageManager: React.FC = () => {
             <h5>Tour Services ({data.tourServices.length})</h5>
             {data.tourServices.map((service) => (
               <div key={service.id} className="p-3 border-1 border-round mb-2 surface-border">
-                <div className="font-bold">{service.name}</div>
+                <div className="flex justify-content-between align-items-center">
+                  <div className="font-bold">{service.name}</div>
+                  <Button
+                    icon="pi pi-trash"
+                    className="p-button-rounded p-button-text p-button-danger p-button-sm"
+                    tooltip="Remove this service"
+                    onClick={() => handleRemoveTourService(data.id, service.id)}
+                  />
+                </div>
               </div>
             ))}
           </div>
@@ -419,17 +534,22 @@ const PackageManager: React.FC = () => {
                 <Dropdown 
                   value={selectedHotel} 
                   options={hotels}
-                  onChange={(e) => setSelectedHotel(e.value)}
+                  onChange={(e) => {
+                    setSelectedHotel(e.value);
+                    setSelectedRoomTypes([]); // Clear room types when hotel changes
+                  }}
                   placeholder="Select hotel"
                 />
               </div>
               <div className="col-4">
-                <label className="block text-900 font-medium mb-2">Room Type</label>
+                <label className="block text-900 font-medium mb-2">Room Types</label>
                 <Dropdown 
-                  value={selectedRoomType} 
-                  options={roomTypes}
-                  onChange={(e) => setSelectedRoomType(e.value)}
-                  placeholder="Select room type"
+                  value={selectedRoomTypes} 
+                  options={getAvailableRoomTypes()}
+                  onChange={(e) => setSelectedRoomTypes(e.value)}
+                  placeholder="Select room types"
+                  multiple
+                  disabled={!selectedHotel}
                 />
               </div>
               <div className="col-2 flex align-items-end">
