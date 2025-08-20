@@ -1,4 +1,4 @@
-export interface Package {
+export interface Destination {
   id: string;
   nights: number;
   city: string;
@@ -9,8 +9,13 @@ export interface Package {
 
 export interface Hotel {
   id: string;
-  hotel: string;
-  roomType: string;
+  name: string;
+  roomTypes: RoomType[];
+}
+
+export interface RoomType {
+  id: string;
+  name: string;
 }
 
 export interface Excursion {

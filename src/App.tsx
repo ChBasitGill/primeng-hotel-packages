@@ -1,10 +1,9 @@
-import React from 'react';
-import PackageManager from './components/PackageManager';
+import DestinationManager from "./components/DestinationManager";
 
 function App() {
   return (
     <div className="min-h-screen bg-gray-50">
-      <PackageManager />
+      <DestinationManager />
     </div>
   );
 }

@@ -1,3 +1,274 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* PrimeReact specific fixes */
+:root {
+    --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    --surface-a: #ffffff;
+    --surface-b: #f8f9fa;
+    --surface-c: #e9ecef;
+    --surface-d: #dee2e6;
+    --surface-e: #ffffff;
+    --surface-f: #ffffff;
+    --text-color: #495057;
+    --text-color-secondary: #6c757d;
+    --primary-color: #3B82F6;
+    --primary-color-text: #ffffff;
+    --font-size: 1rem;
+    --border-radius: 6px;
+}
+
+.p-component {
+    font-family: var(--font-family);
+    font-size: var(--font-size);
+    color: var(--text-color);
+}
+
+.p-datatable .p-datatable-thead>tr>th {
+    background: #f8f9fa;
+    color: #495057;
+    font-weight: 600;
+}
+
+.p-button {
+    font-weight: 500;
+}
+
+.p-card {
+    box-shadow: 0 2px 1px -1px rgba(0, 0, 0, 0.2), 0 1px 1px 0 rgba(0, 0, 0, 0.14), 0 1px 3px 0 rgba(0, 0, 0, 0.12);
+    border-radius: 6px;
+}
+
+.p-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.p-dialog .p-dialog-header {
+    background: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.p-multiselect .p-multiselect-label {
+    padding: 0.5rem 0.75rem;
+}
+
+.p-dropdown .p-dropdown-label {
+    padding: 0.5rem 0.75rem;
+}
+
+.p-inputtext {
+    padding: 0.5rem 0.75rem;
+}
+
+/* Additional PrimeReact styling fixes */
+.p-datatable {
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+}
+
+.p-datatable .p-datatable-tbody>tr {
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.p-datatable .p-datatable-tbody>tr:hover {
+    background-color: #f8f9fa;
+}
+
+.p-button {
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.p-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.p-button-success {
+    background: #10b981;
+    border-color: #10b981;
+}
+
+.p-button-info {
+    background: #3b82f6;
+    border-color: #3b82f6;
+}
+
+.p-button-danger {
+    background: #ef4444;
+    border-color: #ef4444;
+}
+
+.p-button-secondary {
+    background: #6b7280;
+    border-color: #6b7280;
+}
+
+.p-multiselect-panel .p-multiselect-items .p-multiselect-item {
+    padding: 0.5rem 1rem;
+}
+
+.p-multiselect-panel .p-multiselect-items .p-multiselect-item:hover {
+    background-color: #f1f5f9;
+}
+
+.p-dropdown-panel .p-dropdown-items .p-dropdown-item {
+    padding: 0.5rem 1rem;
+}
+
+.p-dropdown-panel .p-dropdown-items .p-dropdown-item:hover {
+    background-color: #f1f5f9;
+}
+
+.p-dialog {
+    border-radius: 12px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.p-dialog .p-dialog-content {
+    padding: 1.5rem;
+}
+
+.p-dialog .p-dialog-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+.p-badge.p-badge-info {
+    background: #3b82f6;
+}
+
+.p-badge.p-badge-secondary {
+    background: #6b7280;
+}
+
+.p-badge.p-badge-success {
+    background: #10b981;
+}
+
+/* Grid system fixes for PrimeReact */
+.grid {
+    display: flex;
+    flex-wrap: wrap;
+    margin-right: -0.5rem;
+    margin-left: -0.5rem;
+}
+
+.col-12,
+.col-6,
+.col-4,
+.col-5,
+.col-2 {
+    padding: 0.5rem;
+}
+
+.col-12 {
+    flex: 0 0 100%;
+    max-width: 100%;
+}
+
+.col-6 {
+    flex: 0 0 50%;
+    max-width: 50%;
+}
+
+.col-4 {
+    flex: 0 0 33.333333%;
+    max-width: 33.333333%;
+}
+
+.col-5 {
+    flex: 0 0 41.666667%;
+    max-width: 41.666667%;
+}
+
+.col-2 {
+    flex: 0 0 16.666667%;
+    max-width: 16.666667%;
+}
+
+@media (min-width: 768px) {
+    .md\:col-4 {
+        flex: 0 0 33.333333%;
+        max-width: 33.333333%;
+    }
+
+    .md\:col-5 {
+        flex: 0 0 41.666667%;
+        max-width: 41.666667%;
+    }
+
+    .md\:col-2 {
+        flex: 0 0 16.666667%;
+        max-width: 16.666667%;
+    }
+
+    .md\:col-6 {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+}
+
+/* Additional utility classes for better spacing */
+.p-fluid .p-grid {
+    margin: 0;
+}
+
+.p-fluid .p-col {
+    padding: 0.5rem;
+}
+
+/* Toast notifications styling */
+.p-toast {
+    z-index: 10000;
+}
+
+.p-toast .p-toast-message {
+    margin: 0 0 1rem 0;
+    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+    border-radius: 6px;
+}
+
+/* Confirm dialog styling */
+.p-confirm-dialog {
+    border-radius: 12px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* DataTable pagination styling */
+.p-paginator {
+    background: #f8f9fa;
+    border: 1px solid #e5e7eb;
+    border-top: none;
+    border-radius: 0 0 6px 6px;
+}
+
+/* Ensure proper z-index for dropdowns and dialogs */
+.p-dropdown-panel,
+.p-multiselect-panel {
+    z-index: 1000;
+}
+
+.p-dialog {
+    z-index: 1000;
+}
+
+/* Loading states */
+.p-component-overlay {
+    background-color: rgba(0, 0, 0, 0.4);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .p-dialog {
+        width: 95vw !important;
+        margin: 1rem;
+    }
+
+    .p-datatable .p-datatable-thead>tr>th,
+    .p-datatable .p-datatable-tbody>tr>td {
+        padding: 0.5rem;
+    }
+}
