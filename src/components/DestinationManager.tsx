@@ -1,6 +1,4 @@
-import { Badge } from "primereact/badge";
 import { Button } from "primereact/button";
-import { Card } from "primereact/card";
 import { Column } from "primereact/column";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { DataTable } from "primereact/datatable";
@@ -43,12 +41,11 @@ const DestinationManager: React.FC = () => {
       ],
     },
   ]);
-
-  const [expandedRows, setExpandedRows] = useState<any>(null);
   const [showDestinationDialog, setShowDestinationDialog] = useState(false);
   const [selectedDestination, setSelectedDestination] =
     useState<Destination | null>(null);
   const [editingDestination, setEditingDestination] = useState(false);
+  const [editingHotel, setEditingHotel] = useState<Hotel | null>(null);
 
   // Form states
   const [nights, setNights] = useState<number>(1);
@@ -196,7 +193,6 @@ const DestinationManager: React.FC = () => {
     )
       return;
 
-    const selectedHotelData = hotels.find((h) => h.value === selectedHotel);
     const newHotel: Hotel = {
       id: Date.now().toString(),
       name: selectedHotel,
@@ -218,6 +214,45 @@ const DestinationManager: React.FC = () => {
     setSelectedRoomTypes([]);
   };
 
+  const handleRemoveHotel = (hotelId: string) => {
+    if (!selectedDestination) return;
+
+    setDestinations((prev) =>
+      prev.map((dest) =>
+        dest.id === selectedDestination.id
+          ? {
+              ...dest,
+              hotels: dest.hotels.filter((hotel) => hotel.id !== hotelId),
+            }
+          : dest
+      )
+    );
+  };
+
+  const handleRemoveRoomType = (hotelId: string, roomTypeId: string) => {
+    if (!selectedDestination) return;
+
+    setDestinations((prev) =>
+      prev.map((dest) =>
+        dest.id === selectedDestination.id
+          ? {
+              ...dest,
+              hotels: dest.hotels.map((hotel) =>
+                hotel.id === hotelId
+                  ? {
+                      ...hotel,
+                      roomTypes: hotel.roomTypes.filter(
+                        (rt) => rt.id !== roomTypeId
+                      ),
+                    }
+                  : hotel
+              ),
+            }
+          : dest
+      )
+    );
+  };
+
   const getAvailableRoomTypes = () => {
     const selectedHotelData = hotels.find((h) => h.value === selectedHotel);
     return selectedHotelData ? selectedHotelData.roomTypes : [];
@@ -227,8 +262,27 @@ const DestinationManager: React.FC = () => {
     const excursionNames = rowData.excursions.map((e) => e.name).join(", ");
     const serviceNames = rowData.tourServices.map((s) => s.name).join(", ");
 
+    // Format hotel and room type information
+    const hotelInfo = rowData.hotels
+      .map((hotel) => {
+        const roomTypes = hotel.roomTypes.map((rt) => rt.name).join(", ");
+        return `${hotel.name}${roomTypes ? ` (${roomTypes})` : ""}`;
+      })
+      .join("; ");
+
     return (
-      <div className="text-sm">
+      <div className="text-sm space-y-2">
+        <div>
+          <strong>City:</strong> {rowData.city}
+        </div>
+        <div>
+          <strong>Nights:</strong> {rowData.nights}
+        </div>
+        {hotelInfo && (
+          <div>
+            <strong>Hotels:</strong> {hotelInfo}
+          </div>
+        )}
         {excursionNames && (
           <div>
             <strong>Excursions:</strong> {excursionNames}
@@ -239,15 +293,6 @@ const DestinationManager: React.FC = () => {
             <strong>Services:</strong> {serviceNames}
           </div>
         )}
-      </div>
-    );
-  };
-
-  const countsBodyTemplate = (rowData: Destination) => {
-    return (
-      <div className="flex gap-2">
-        <Badge value={rowData.hotels.length} className="p-badge-info" />
-        <span className="text-sm">Hotels</span>
       </div>
     );
   };
@@ -271,56 +316,6 @@ const DestinationManager: React.FC = () => {
     );
   };
 
-  const rowExpansionTemplate = (data: Destination) => {
-    return (
-      <div className="p-4">
-        <div className="grid">
-          {/* Hotels Section */}
-          <div className="col-12 md:col-4">
-            <h5>Hotels ({data.hotels.length})</h5>
-            {data.hotels.map((hotel) => (
-              <Card key={hotel.id} className="mb-3">
-                <div className="font-bold text-lg">{hotel.name}</div>
-                <div className="mt-2">
-                  <strong>Room Types:</strong>
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {hotel.roomTypes.map((roomType) => (
-                      <Badge
-                        key={roomType.id}
-                        value={roomType.name}
-                        className="p-badge-secondary"
-                      />
-                    ))}
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-
-          {/* Excursions Section */}
-          <div className="col-12 md:col-4">
-            <h5>Excursions ({data.excursions.length})</h5>
-            {data.excursions.map((excursion) => (
-              <Card key={excursion.id} className="mb-3">
-                <div className="font-bold">{excursion.name}</div>
-              </Card>
-            ))}
-          </div>
-
-          {/* Tour Services Section */}
-          <div className="col-12 md:col-4">
-            <h5>Tour Services ({data.tourServices.length})</h5>
-            {data.tourServices.map((service) => (
-              <Card key={service.id} className="mb-3">
-                <div className="font-bold">{service.name}</div>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div className="p-6">
       <Toast />
@@ -340,25 +335,16 @@ const DestinationManager: React.FC = () => {
         value={destinations}
         reorderableRows
         onRowReorder={(e) => setDestinations(e.value)}
-        expandedRows={expandedRows}
-        onRowToggle={(e) => setExpandedRows(e.data)}
-        rowExpansionTemplate={rowExpansionTemplate}
         dataKey="id"
         className="p-datatable-striped"
       >
         <Column rowReorder style={{ width: "3em" }} />
-        <Column expander style={{ width: "3em" }} />
         <Column field="city" header="City" />
         <Column field="nights" header="Nights" />
         <Column
           header="Summary"
           body={summaryBodyTemplate}
-          style={{ minWidth: "200px" }}
-        />
-        <Column
-          header="Hotels"
-          body={countsBodyTemplate}
-          style={{ minWidth: "100px" }}
+          style={{ minWidth: "300px" }}
         />
         <Column
           header="Actions"
@@ -433,7 +419,57 @@ const DestinationManager: React.FC = () => {
 
           {/* Hotels Section */}
           <div className="col-12">
-            <h4 className="mt-4">Add Hotels</h4>
+            <h4 className="mt-4">Hotels</h4>
+
+            {/* Existing Hotels */}
+            {selectedDestination?.hotels &&
+              selectedDestination.hotels.length > 0 && (
+                <div className="mb-4">
+                  <h5 className="text-900 font-medium mb-2">
+                    Existing Hotels:
+                  </h5>
+                  {selectedDestination.hotels.map((hotel) => (
+                    <div
+                      key={hotel.id}
+                      className="p-3 border-round border-1 surface-border mb-2"
+                    >
+                      <div className="flex justify-content-between align-items-center mb-2">
+                        <span className="font-medium">{hotel.name}</span>
+                        <Button
+                          icon="pi pi-trash"
+                          className="p-button-rounded p-button-text p-button-danger p-button-sm"
+                          tooltip="Remove Hotel"
+                          onClick={() => handleRemoveHotel(hotel.id)}
+                        />
+                      </div>
+                      {hotel.roomTypes.length > 0 && (
+                        <div className="ml-3">
+                          <h6 className="text-600 text-sm mb-1">Room Types:</h6>
+                          {hotel.roomTypes.map((roomType) => (
+                            <div
+                              key={roomType.id}
+                              className="flex justify-content-between align-items-center mb-1"
+                            >
+                              <span className="text-sm">{roomType.name}</span>
+                              <Button
+                                icon="pi pi-times"
+                                className="p-button-rounded p-button-text p-button-secondary p-button-sm"
+                                tooltip="Remove Room Type"
+                                onClick={() =>
+                                  handleRemoveRoomType(hotel.id, roomType.id)
+                                }
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+            {/* Add New Hotel */}
+            <h5 className="text-900 font-medium mb-2">Add New Hotel:</h5>
             <div className="grid">
               <div className="col-12 md:col-5">
                 <label className="block text-900 font-medium mb-2">Hotel</label>
